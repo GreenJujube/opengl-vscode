@@ -1,0 +1,204 @@
+换源
+#推荐清华源
+#1  修改/etc/apt/source.list(修改前记得备份)
+-----------/etc/apt/source.list------------------
+# deb cdrom:[Ubuntu 16.04 LTS _Xenial Xerus_ - Release amd64 (20160420.1)]/ xenial main restricted
+deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial main restricted
+deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-updates main restricted
+deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial universe
+deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-updates universe
+deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial multiverse
+deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-updates multiverse
+deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-backports main restricted universe multiverse
+deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-security main restricted
+deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-security universe
+deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-security multiverse
+-----------/etc/apt/source.list------------------
+#2 sudo apt update
+
+准备
+#1  下载glad     https://glad.dav1d.de/
+#2  下载glfw     https://github.com/glfw/glfw
+#3  安装cmake    sudo apt install cmake
+#4  执行          sudo apt-get install libglfw3-dev
+_________________sudo apt-get install libxinerama-dev
+_________________sudo apt-get install libxcursor-dev
+
+安装
+----glad
+#1  include(包含glad和KHR)放至/usr/local/
+#2  src/glad.c 放至源文件所在地方
+----glfw
+#1  进入glfw-master新建文件夹build并进入    cd glfw-master&&mkdir build&&cd build
+#2  执行sudo cmake ../
+？？？1错误The Xinerama library and headers were not found 执行 sudo apt-get install libxinerama-dev
+？？？2错误The Xcursor libraries and headers were not found 执行 sudo apt-get install libxcursor-dev
+#3  返回到glfw-master并执行sudo make       cd ../&&sudo make
+#4  执行sudo make install
+？？？错误Could NOT find GLEW (missing: GLEW_INCLUDE_DIR GLEW_LIBRARY)  执行sudo apt install libglew-dev
+
+vscode配置
+#1  安装插件C/C++ ms-vscode.cpptools
+#2  找到debug点击运行并替换launch.json
+-------------launch.json--------------
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${fileDirname}/${fileBasenameNoExtension}.out",
+            "args": [""],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "internalConsoleOptions": "neverOpen", 
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}
+-------------launch.json--------------
+#3  ctrl shift B 新建tasks.json  Other
+-------------tasks.json---------------
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "g++", // 任务名称，与launch.json的preLaunchTask相对应
+            "command": "g++", // 要使用的编译器, C++就写g++
+            "args": [
+                "${file}",
+                "-o", // 指定输出文件名，不加该参数则默认输出a.exe，Linux下默认a.out
+                "${fileDirname}/${fileBasenameNoExtension}.out",
+                "glad.c",
+                "-lglfw3",
+                "-lGL",
+                "-lm",
+                "-lXrandr",
+                "-lXi",
+                "-lX11",
+                "-lXxf86vm",
+                "-lpthread",
+                "-ldl",
+                "-lXinerama",
+                "-lXcursor",
+                "-g", // 生成和调试有关的信息
+                //"-Wall", // 开启额外警告
+                "-static-libgcc", // 静态链接// C语言最新标准为c11，或根据自己的需要进行修改比如C++17
+            ], // 编译命令参数
+            "type": "shell", // 可以为shell或process，前者相当于先打开shell再输入命令，后者是直接运行命令
+            "group": {
+                "kind": "build",
+                "isDefault": true // 设为false可做到一个tasks.json配置多个编译指令，需要自己修改本文件，我这里不多提
+            },
+            "presentation": {
+                "echo": true, 
+                "reveal": "always", // 在“终端”中显示编译信息的策略，可以为always，silent，never。具体参见VSC的文档
+                "focus": true, // 设为true后可以使执行task时焦点聚集在终端
+                "panel": "shared" // 不同的文件的编译信息共享一个终端面板
+            },
+        }
+    ]
+}
+-------------tasks.json---------------
+
+
+#新建text.cpp
+-------------text.cpp-----------------
+// System Headers
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+// Standard Headers
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);//回调函数原型声明
+void processInput(GLFWwindow *window);
+
+// settings
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
+
+int main(int argc, char * argv[]) {
+
+    //初始化GLFW
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // uncomment this statement to fix compilation on OS X
+#endif
+    //创建一个窗口对象
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "FirstGL", NULL, NULL);
+    if (window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+    //通知GLFW将我们窗口的上下文设置为当前线程的主上下文
+    glfwMakeContextCurrent(window);
+    //对窗口注册一个回调函数,每当窗口改变大小，GLFW会调用这个函数并填充相应的参数供你处理
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    //初始化GLAD用来管理OpenGL的函数指针
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
+
+    //渲染循环
+    while(!glfwWindowShouldClose(window))
+    {
+        // 输入
+        processInput(window);
+
+        // 渲染指令
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // 检查并调用事件，交换缓冲
+        glfwSwapBuffers(window);//检查触发事件
+        glfwPollEvents();    //交换颜色缓冲
+    }
+
+    //释放/删除之前的分配的所有资源
+    glfwTerminate();
+    return EXIT_SUCCESS;
+}
+
+//输入控制，检查用户是否按下了返回键(Esc)
+void processInput(GLFWwindow *window)
+{
+    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+}
+
+// 当用户改变窗口的大小的时候，视口也应该被调整 
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    // 注意：对于视网膜(Retina)显示屏，width和height都会明显比原输入值更高一点。
+    glViewport(0, 0, width, height);
+}
+-------------text.cpp-----------------
+
+#ctrl shift B运行task进行编译  f5进行调试
